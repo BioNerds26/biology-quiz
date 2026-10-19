@@ -1,0 +1,447 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>body{margin:0}[hidden]{display:none!important}</style>
+<title>IGCSE Biology Topic 1 Quiz</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+/* Layout: one centred column. Gate card first, then 15 stacked question cards with a sticky progress bar, then a score banner and per-question review. */
+:root {
+  --bg: #edf3f0;
+  --surface: #ffffff;
+  --ink: #132722;
+  --muted: #566b65;
+  --line: #cddad5;
+  --accent: #1d7a5a;
+  --accent-ink: #ffffff;
+  --accent-soft: #dcefe7;
+  --good: #187a43;
+  --good-bg: #dff2e6;
+  --bad: #b0321e;
+  --bad-bg: #fae6e1;
+  --warn-bg: #fdf0d3;
+  --warn: #7a5200;
+  --display: "Bricolage Grotesque", "Trebuchet MS", system-ui, sans-serif;
+  --body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0e1917; --surface: #15241f; --ink: #e5f0ec; --muted: #91a9a2; --line: #2a3f38;
+    --accent: #4cc79b; --accent-ink: #082016; --accent-soft: #1b3a30;
+    --good: #5fd48e; --good-bg: #17382a; --bad: #ff8f7a; --bad-bg: #3d1f19;
+    --warn-bg: #3b3017; --warn: #f1c867;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0e1917; --surface: #15241f; --ink: #e5f0ec; --muted: #91a9a2; --line: #2a3f38;
+  --accent: #4cc79b; --accent-ink: #08201a; --accent-soft: #1b3a30;
+  --good: #5fd48e; --good-bg: #17382a; --bad: #ff8f7a; --bad-bg: #3d1f19;
+  --warn-bg: #3b3017; --warn: #f1c867;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 16px; line-height: 1.5;
+  padding-block: 24px 64px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.wrap { max-width: 720px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
+.eyebrow { font-family: var(--mono); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); margin: 0; }
+h1 { font-family: var(--display); font-weight: 800; font-size: clamp(28px, 6vw, 40px); line-height: 1.1; margin: 6px 0 0; text-wrap: balance; }
+h2 { font-family: var(--display); font-weight: 600; font-size: 20px; margin: 0; text-wrap: balance; }
+.lede { color: var(--muted); margin: 8px 0 0; max-width: 60ch; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 20px; min-width: 0; }
+.gate { display: flex; flex-direction: column; gap: 16px; }
+.field { display: flex; flex-direction: column; gap: 6px; }
+label.lbl { font-weight: 600; font-size: 14px; }
+input[type="text"], input[type="tel"] {
+  font: inherit; color: var(--ink); background: var(--bg); border: 1.5px solid var(--line); border-radius: 8px;
+  padding: 12px 14px; width: 100%; min-height: 48px;
+}
+input[type="text"]:focus-visible, input[type="tel"]:focus-visible, button:focus-visible, .opt:has(input:focus-visible) {
+  outline: 3px solid var(--accent); outline-offset: 2px;
+}
+.err { color: var(--bad); font-size: 14px; margin: 0; min-height: 20px; }
+.btn {
+  font: inherit; font-weight: 600; background: var(--accent); color: var(--accent-ink); border: 0; border-radius: 8px;
+  padding: 14px 20px; min-height: 48px; cursor: pointer; align-self: flex-start;
+}
+.btn:hover { filter: brightness(1.08); }
+.btn.ghost { background: transparent; color: var(--ink); border: 1.5px solid var(--line); }
+.meta { display: flex; flex-wrap: wrap; gap: 8px 16px; font-family: var(--mono); font-size: 13px; color: var(--muted); }
+
+/* quiz */
+.bar {
+  position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--bg);
+  padding: 10px 0; display: flex; flex-direction: column; gap: 8px;
+}
+.bar-row { display: flex; justify-content: space-between; gap: 12px; font-family: var(--mono); font-size: 13px; color: var(--muted); flex-wrap: wrap; }
+.track { height: 6px; background: var(--line); border-radius: 3px; overflow: hidden; }
+.fill { height: 100%; width: 0; background: var(--accent); transition: width .2s ease; }
+.q { display: flex; flex-direction: column; gap: 12px; scroll-margin-top: 80px; }
+.q-head { display: flex; gap: 12px; align-items: baseline; }
+.q-num { font-family: var(--mono); font-weight: 500; color: var(--accent); flex: none; min-width: 2.2ch; }
+.q-text { font-weight: 600; margin: 0; min-width: 0; }
+.opts { display: flex; flex-direction: column; gap: 8px; border: 0; margin: 0; padding: 0; min-width: 0; }
+.opt {
+  display: flex; gap: 12px; align-items: flex-start; padding: 12px 14px; border: 1.5px solid var(--line);
+  border-radius: 8px; cursor: pointer; background: var(--bg); min-width: 0;
+}
+.opt:hover { border-color: var(--accent); }
+.opt:has(input:checked) { border-color: var(--accent); background: var(--accent-soft); }
+.opt input { margin: 4px 0 0; accent-color: var(--accent); flex: none; width: 18px; height: 18px; }
+.opt .letter { font-family: var(--mono); font-weight: 500; flex: none; color: var(--muted); }
+.opt .txt { min-width: 0; overflow-wrap: anywhere; }
+.q.missing { border-color: var(--bad); }
+.notice { background: var(--warn-bg); color: var(--warn); border-radius: 8px; padding: 12px 14px; font-size: 15px; }
+
+/* results */
+.score { display: flex; flex-wrap: wrap; align-items: center; gap: 16px 28px; }
+.big { font-family: var(--display); font-weight: 800; font-size: clamp(56px, 16vw, 88px); line-height: 1; font-variant-numeric: tabular-nums; }
+.big small { font-size: .4em; color: var(--muted); font-weight: 600; }
+.who { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.who b { font-size: 18px; overflow-wrap: anywhere; }
+.who span { font-family: var(--mono); font-size: 14px; color: var(--muted); user-select: all; overflow-wrap: anywhere; }
+.pills { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+.pill { font-family: var(--mono); font-size: 12px; padding: 4px 10px; border-radius: 99px; background: var(--accent-soft); }
+.rev { display: flex; flex-direction: column; gap: 10px; border-left: 5px solid var(--line); }
+.rev.ok { border-left-color: var(--good); }
+.rev.no { border-left-color: var(--bad); }
+.status { font-family: var(--mono); font-size: 12px; font-weight: 500; letter-spacing: .06em; text-transform: uppercase; }
+.rev.ok .status { color: var(--good); }
+.rev.no .status { color: var(--bad); }
+.ans { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; font-size: 15px; }
+.ans dt { color: var(--muted); }
+.ans dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
+.ans .right { color: var(--good); font-weight: 600; }
+.ans .wrong { color: var(--bad); font-weight: 600; }
+.why { font-size: 14px; color: var(--muted); margin: 0; padding-top: 8px; border-top: 1px solid var(--line); }
+.actions { display: flex; flex-wrap: wrap; gap: 12px; }
+a.btn { display: inline-block; text-decoration: none; text-align: center; }
+.save { font-size: 14px; border-radius: 8px; padding: 10px 14px; background: var(--accent-soft); width: 100%; }
+.save.fail { background: var(--warn-bg); color: var(--warn); }
+.save textarea {
+  display: block; width: 100%; margin-top: 8px; font: inherit; font-family: var(--mono); font-size: 13px; color: var(--ink);
+  background: var(--surface); border: 1.5px solid var(--line); border-radius: 8px; padding: 10px; min-height: 96px;
+}
+.tbl { overflow-x: auto; border: 1px solid var(--line); border-radius: 8px; }
+.tbl table { border-collapse: collapse; width: 100%; font-size: 14px; }
+.tbl th, .tbl td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+.tbl th { font-family: var(--mono); font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); background: var(--bg); }
+.tbl td.num { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+.tbl tr:last-child td { border-bottom: 0; }
+.teacher-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+.teacher-head .btn { padding: 8px 14px; min-height: 40px; }
+@media (prefers-reduced-motion: reduce) { .fill { transition: none; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <p class="eyebrow">IGCSE Biology 0610 · Topic 1</p>
+    <h1>Characteristics and Classification of Living Organisms</h1>
+    <p class="lede">15 multiple-choice questions. You get your mark and the correct answers with explanations after you submit.</p>
+  </header>
+
+  <!-- Teacher view: only shown to people who can edit this page -->
+  <section class="card" id="teacher" hidden style="display:flex;flex-direction:column;gap:12px">
+    <div class="teacher-head">
+      <h2>Student results <span class="meta" id="t-count" style="display:inline"></span></h2>
+      <button class="btn ghost" type="button" id="t-copy">Copy as table</button>
+    </div>
+    <div class="tbl"><table>
+      <thead><tr><th>Name</th><th>Phone</th><th>Mark</th><th>%</th><th>Tries</th><th>Submitted</th></tr></thead>
+      <tbody id="t-body"><tr><td colspan="6" style="color:var(--muted)">No submissions yet.</td></tr></tbody>
+    </table></div>
+    <p class="meta" id="t-msg"></p>
+  </section>
+
+  <!-- Step 1: details -->
+  <form class="card gate" id="gate" novalidate>
+    <h2>Enter your details to start</h2>
+    <div class="field">
+      <label class="lbl" for="name">Full name</label>
+      <input type="text" id="name" autocomplete="name" placeholder="e.g. Omar Hassan">
+    </div>
+    <div class="field">
+      <label class="lbl" for="phone">Phone number</label>
+      <input type="tel" id="phone" autocomplete="tel" inputmode="tel" placeholder="e.g. 01012345678">
+    </div>
+    <p class="err" id="gate-err" role="alert"></p>
+    <button class="btn" type="submit" id="start">Start quiz</button>
+  </form>
+
+  <!-- Step 2: questions -->
+  <section id="quiz" hidden>
+    <div class="bar">
+      <div class="bar-row"><span id="who-line"></span><span id="count">0 / 15 answered</span></div>
+      <div class="track"><div class="fill" id="fill"></div></div>
+    </div>
+    <div id="qs" style="display:flex;flex-direction:column;gap:16px;margin-top:8px"></div>
+    <div style="display:flex;flex-direction:column;gap:12px;margin-top:20px">
+      <div class="notice" id="notice" hidden></div>
+      <button class="btn" type="button" id="submit">Submit answers</button>
+    </div>
+  </section>
+
+  <!-- Step 3: results -->
+  <section id="result" hidden style="display:flex;flex-direction:column;gap:16px"></section>
+</div>
+
+<script>
+var QUESTIONS = [
+  { q: "Which of the following is NOT a characteristic shared by all living organisms?", o: ["Respiration", "Photosynthesis", "Excretion", "Growth"], a: 1,
+    e: "The seven characteristics are movement, respiration, sensitivity, growth, reproduction, excretion and nutrition (MRS GREN). Only plants and some bacteria photosynthesise." },
+  { q: "What is the term for the removal of toxic materials and waste products of metabolism from an organism?", o: ["Egestion", "Secretion", "Excretion", "Respiration"], a: 2,
+    e: "Excretion removes metabolic waste (e.g. CO₂, urea). Egestion is the removal of undigested food." },
+  { q: "In the binomial name Homo sapiens, what does the first word, Homo, represent?", o: ["The species", "The family", "The kingdom", "The genus"], a: 3,
+    e: "A binomial name has two parts: the genus (capital first letter) followed by the species (all lower case)." },
+  { q: "Which is the best definition of a species?", o: ["A group of organisms that look identical", "A group of organisms that can reproduce to produce fertile offspring", "A group of organisms living in the same habitat", "A group of organisms that share the same genus"], a: 1,
+    e: "A species is a group of organisms that can reproduce to produce fertile offspring. A mule is infertile because horses and donkeys are different species." },
+  { q: "Which list shows the classification groups in order from largest to smallest?", o: ["Kingdom, phylum, class, order, family, genus, species", "Kingdom, class, phylum, order, genus, family, species", "Species, genus, family, order, class, phylum, kingdom", "Phylum, kingdom, class, order, family, genus, species"], a: 0,
+    e: "Kingdom, Phylum, Class, Order, Family, Genus, Species." },
+  { q: "Which feature is found in mammals but NOT in the other vertebrate groups?", o: ["Lungs for gas exchange", "A backbone", "Mammary glands that produce milk", "Internal fertilisation"], a: 2,
+    e: "Mammals have hair/fur and mammary glands, and most give birth to live young." },
+  { q: "A vertebrate has moist skin and lays soft eggs without shells in water. To which group does it belong?", o: ["Reptiles", "Fish", "Amphibians", "Birds"], a: 2,
+    e: "Amphibians have moist, permeable skin and lay shell-less eggs in water. Reptiles have dry scaly skin and lay leathery-shelled eggs on land." },
+  { q: "Which group of arthropods has three body parts and six legs?", o: ["Arachnids", "Insects", "Crustaceans", "Myriapods"], a: 1,
+    e: "Insects have a head, thorax and abdomen, plus three pairs of legs." },
+  { q: "A spider has two body parts and eight legs. To which group of arthropods does it belong?", o: ["Insects", "Crustaceans", "Myriapods", "Arachnids"], a: 3,
+    e: "Arachnids (spiders, scorpions, ticks) have two body parts and four pairs of legs." },
+  { q: "Which feature is typical of a monocotyledon?", o: ["Net-like veins in the leaves", "Two seed leaves (cotyledons)", "Parallel veins in the leaves", "Flower parts in fours or fives"], a: 2,
+    e: "Monocots (e.g. grass, maize) have one cotyledon and parallel leaf veins. Dicots have two cotyledons and net-like veins." },
+  { q: "Which group of plants has roots, stems and leaves (fronds) but reproduces using spores and does not produce flowers?", o: ["Ferns", "Flowering plants", "Algae", "Fungi"], a: 0,
+    e: "Ferns reproduce by spores and have fronds. Flowering plants reproduce by seeds, and fungi are not plants." },
+  { q: "Which statement about fungi is correct?", o: ["They make food by photosynthesis", "Their bodies are made of thread-like hyphae forming a mycelium", "Their cell walls are made of cellulose", "They are all single-celled"], a: 1,
+    e: "Most fungi are multicellular with hyphae forming a mycelium. They feed saprotrophically or parasitically and have chitin cell walls (yeast is a single-celled exception)." },
+  { q: "Which statement about viruses is correct?", o: ["They have a nucleus and cytoplasm", "They can reproduce on their own outside a host", "They are made of cells with a cell membrane", "They have a protein coat and genetic material but no cell structure"], a: 3,
+    e: "Viruses are not made of cells. They have a protein coat around genetic material and reproduce only inside host cells." },
+  { q: "Which feature is found in bacterial cells?", o: ["A true nucleus surrounded by a membrane", "Chloroplasts in all cells", "Mitochondria", "A cell wall and circular DNA with no true nucleus"], a: 3,
+    e: "Bacteria are prokaryotes: cell wall, cytoplasm and circular DNA (often plasmids) but no membrane-bound nucleus." },
+  { q: "What is a dichotomous key used for?", o: ["Identifying organisms using a series of paired statements or questions", "Showing the energy flow between organisms", "Measuring the population size of a species", "Showing the evolutionary age of organisms"], a: 0,
+    e: "A dichotomous key gives two choices at each step based on observable features, leading to the identity of the organism." }
+];
+var LETTERS = ["A", "B", "C", "D"];
+var picked = new Array(QUESTIONS.length).fill(-1);
+var person = { name: "", phone: "" };
+var warned = false;
+var dbRef = null, userRef = null, myId = null, teacherSub = null, teacherRows = [];
+
+function $(id) { return document.getElementById(id); }
+
+/* Shared storage: each student writes one document at submissions/<their id>; only editors of the page can read them all. */
+(function initStorage() {
+  if (!window.claude || !window.claude.use) return;
+  Promise.all([window.claude.use("db"), window.claude.use("user")]).then(function (r) {
+    dbRef = r[0]; userRef = r[1];
+    if (!dbRef || !userRef) return;
+    Promise.resolve(userRef.id()).then(function (id) { myId = id || null; }).catch(function () {});
+    var canSee = false;
+    try { canSee = !!(userRef.canEdit() || userRef.isOwner()); } catch (e) {}
+    if (canSee) startTeacherView();
+  }).catch(function () {});
+})();
+
+function startTeacherView() {
+  $("teacher").hidden = false;
+  if (teacherSub) return;
+  teacherSub = dbRef.collection("submissions").orderBy("submittedAt", "desc").limit(500).onSnapshot(function (snap) {
+    teacherRows = snap.docs.map(function (d) { return d.data() || {}; });
+    renderTeacher();
+  }, function () { $("t-msg").textContent = "Results could not be loaded. Reload the page to try again."; });
+}
+
+function fmtTime(iso) {
+  try {
+    return new Date(iso).toLocaleString("en-GB", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
+  } catch (e) { return ""; }
+}
+
+function renderTeacher() {
+  $("t-count").textContent = teacherRows.length + (teacherRows.length === 1 ? " student" : " students");
+  if (!teacherRows.length) {
+    $("t-body").innerHTML = '<tr><td colspan="6" style="color:var(--muted)">No submissions yet.</td></tr>';
+    return;
+  }
+  $("t-body").innerHTML = teacherRows.map(function (r) {
+    return "<tr><td>" + esc(r.name || "") + '</td><td class="num">' + esc(r.phone || "") + '</td><td class="num">' +
+      esc(r.score) + " / " + esc(r.total) + '</td><td class="num">' + esc(r.percent) + '%</td><td class="num">' +
+      esc(r.attempts || 1) + "</td><td>" + esc(fmtTime(r.submittedAt)) + "</td></tr>";
+  }).join("");
+}
+
+$("t-copy").addEventListener("click", function () {
+  var lines = ["Name\tPhone\tScore\tTotal\tPercent\tSubmitted"].concat(teacherRows.map(function (r) {
+    return [r.name, r.phone, r.score, r.total, r.percent, r.submittedAt].join("\t");
+  }));
+  var text = lines.join("\n");
+  var done = function () { $("t-msg").textContent = "Copied. Paste it into Excel or Google Sheets."; };
+  var fail = function () { $("t-msg").textContent = "Copy was blocked here. Select the table and copy it by hand."; };
+  try { navigator.clipboard.writeText(text).then(done, fail); } catch (e) { fail(); }
+});
+
+function resultText(score, total) {
+  return "IGCSE Biology Topic 1 quiz\nName: " + person.name + "\nPhone: " + person.phone + "\nMark: " + score + " / " + total;
+}
+
+function setSave(ok, html) {
+  var el = $("save-status");
+  if (!el) return;
+  el.className = "save" + (ok ? "" : " fail");
+  el.innerHTML = html;
+}
+
+function offerManualCopy(score, total) {
+  var text = resultText(score, total);
+  setSave(false, "Your result was not saved automatically. You can copy it here and send it to your teacher." +
+    '<textarea id="manual" readonly>' + esc(text) + '</textarea>' +
+    '<button class="btn ghost" type="button" id="manual-copy" style="margin-top:8px">Copy result</button>');
+  $("manual-copy").addEventListener("click", function () {
+    var ta = $("manual");
+    var shown = function () { $("manual-copy").textContent = "Copied"; };
+    try { navigator.clipboard.writeText(text).then(shown, function () { ta.select(); }); } catch (e) { ta.select(); }
+  });
+}
+
+async function saveResult(score, total, pct) {
+  setSave(true, "Sending your result to your teacher…");
+  try {
+    if (!dbRef || !myId) throw new Error("not available");
+    var ref = dbRef.doc("submissions/" + myId);
+    var attempts = 1;
+    try {
+      var prev = await ref.get();
+      if (prev.exists) attempts = ((prev.data() || {}).attempts || 0) + 1;
+    } catch (e) {}
+    await ref.set({
+      name: person.name, phone: person.phone, score: score, total: total, percent: pct, attempts: attempts,
+      answers: picked.map(function (p) { return p >= 0 ? LETTERS[p] : "-"; }).join(""),
+      submittedAt: new Date().toISOString()
+    });
+    setSave(true, "Your result was sent to your teacher.");
+  } catch (e) {
+    offerManualCopy(score, total);
+  }
+}
+function esc(s) {
+  return String(s).replace(/[&<>"']/g, function (c) {
+    return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+  });
+}
+
+function validPhone(p) {
+  var digits = p.replace(/\D/g, "");
+  return /^[+\d\s().-]+$/.test(p) && digits.length >= 8 && digits.length <= 15;
+}
+
+$("gate").addEventListener("submit", function (ev) {
+  ev.preventDefault();
+  var name = $("name").value.trim();
+  var phone = $("phone").value.trim();
+  var err = $("gate-err");
+  if (name.length < 2) { err.textContent = "Enter your full name to continue."; $("name").focus(); return; }
+  if (!validPhone(phone)) { err.textContent = "Enter a valid phone number, 8 to 15 digits."; $("phone").focus(); return; }
+  err.textContent = "";
+  person = { name: name, phone: phone };
+  $("gate").hidden = true;
+  $("who-line").textContent = name;
+  buildQuiz();
+  $("quiz").hidden = false;
+  window.scrollTo(0, 0);
+});
+
+function buildQuiz() {
+  var html = "";
+  QUESTIONS.forEach(function (item, i) {
+    html += '<fieldset class="card q" id="q' + i + '" style="margin:0"><div class="q-head"><span class="q-num">' + (i + 1) + '</span>' +
+      '<legend class="q-text" style="padding:0">' + esc(item.q) + '</legend></div><div class="opts">';
+    item.o.forEach(function (text, j) {
+      html += '<label class="opt" for="q' + i + 'o' + j + '"><input type="radio" name="q' + i + '" id="q' + i + 'o' + j + '" value="' + j + '">' +
+        '<span class="letter">' + LETTERS[j] + '</span><span class="txt">' + esc(text) + '</span></label>';
+    });
+    html += "</div></fieldset>";
+  });
+  $("qs").innerHTML = html;
+  $("qs").addEventListener("change", function (ev) {
+    var t = ev.target;
+    if (t && t.type === "radio") {
+      var qi = parseInt(t.name.slice(1), 10);
+      picked[qi] = parseInt(t.value, 10);
+      $("q" + qi).classList.remove("missing");
+      updateProgress();
+    }
+  });
+  updateProgress();
+}
+
+function answeredCount() { return picked.filter(function (x) { return x >= 0; }).length; }
+function updateProgress() {
+  var n = answeredCount();
+  $("count").textContent = n + " / " + QUESTIONS.length + " answered";
+  $("fill").style.width = (n / QUESTIONS.length * 100) + "%";
+  if (n === QUESTIONS.length) { $("notice").hidden = true; warned = false; }
+}
+
+$("submit").addEventListener("click", function () {
+  var missing = [];
+  picked.forEach(function (p, i) { if (p < 0) missing.push(i); });
+  if (missing.length && !warned) {
+    warned = true;
+    missing.forEach(function (i) { $("q" + i).classList.add("missing"); });
+    var list = missing.map(function (i) { return i + 1; }).join(", ");
+    $("notice").textContent = "You have not answered question" + (missing.length > 1 ? "s " : " ") + list +
+      ". Answer them, or press Submit answers again to finish with them marked wrong.";
+    $("notice").hidden = false;
+    $("q" + missing[0]).scrollIntoView({ behavior: "smooth", block: "center" });
+    return;
+  }
+  showResult();
+});
+
+function gradeLine(pct) {
+  if (pct >= 80) return "Excellent";
+  if (pct >= 60) return "Good";
+  if (pct >= 40) return "Needs revision";
+  return "Revise this topic again";
+}
+
+function showResult() {
+  var score = 0;
+  QUESTIONS.forEach(function (item, i) { if (picked[i] === item.a) score++; });
+  var total = QUESTIONS.length;
+  var pct = Math.round(score / total * 100);
+  var html = '<div class="card score"><div class="big">' + score + '<small> / ' + total + '</small></div>' +
+    '<div class="who"><b>' + esc(person.name) + '</b><span>' + esc(person.phone) + '</span>' +
+    '<div class="pills"><span class="pill">' + pct + '%</span><span class="pill">' + gradeLine(pct) + '</span>' +
+    '<span class="pill">' + (total - score) + ' to review</span></div></div></div>' +
+    '<div class="save" id="save-status" role="status"></div>' +
+    '<a class="btn" id="wa" href="https://chat.whatsapp.com/KcVRHSg7YDd5eoj2WYrubt" target="_blank" rel="noopener">Join our WhatsApp group for more quizzes and classified questions</a>';
+  html += '<h2 style="margin-top:8px">Your answers</h2>';
+  QUESTIONS.forEach(function (item, i) {
+    var ok = picked[i] === item.a;
+    var mine = picked[i] >= 0 ? LETTERS[picked[i]] + ". " + item.o[picked[i]] : "No answer";
+    html += '<article class="card rev ' + (ok ? "ok" : "no") + '">' +
+      '<div class="status">Question ' + (i + 1) + ' · ' + (ok ? "Correct" : "Incorrect") + '</div>' +
+      '<p class="q-text" style="margin:0">' + esc(item.q) + '</p><dl class="ans" style="margin:0">' +
+      '<dt>Your answer</dt><dd class="' + (ok ? "right" : "wrong") + '">' + esc(mine) + '</dd>';
+    if (!ok) html += '<dt>Correct</dt><dd class="right">' + LETTERS[item.a] + ". " + esc(item.o[item.a]) + "</dd>";
+    html += '</dl><p class="why">' + esc(item.e) + "</p></article>";
+  });
+  html += '<div class="actions"><button class="btn" type="button" id="retake">Retake the quiz</button></div>';
+  var r = $("result");
+  r.innerHTML = html;
+  r.hidden = false;
+  $("quiz").hidden = true;
+  $("retake").addEventListener("click", function () {
+    picked = new Array(QUESTIONS.length).fill(-1);
+    warned = false;
+    r.hidden = true;
+    $("notice").hidden = true;
+    buildQuiz();
+    $("quiz").hidden = false;
+    window.scrollTo(0, 0);
+  });
+  window.scrollTo(0, 0);
+  saveResult(score, total, pct);
+}
+</script>
