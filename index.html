@@ -1,57 +1,44 @@
 <!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>body{margin:0}[hidden]{display:none!important}</style>
 <title>IGCSE Biology Topic 1 Quiz</title>
 <meta name="claude:viewport-fit-sides" content="cover">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@600;800&family=Manrope:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap">
 <style>
-/* Layout: one centred column. Gate card first, then 15 stacked question cards with a sticky progress bar, then a score banner and per-question review. */
+/* Layout: dark navy lab look. Top nav, hero panel with a green corner and honeycomb stats, a narrow quiz column, then a contact band. */
 :root {
-  --bg: #edf3f0;
-  --surface: #ffffff;
-  --ink: #132722;
-  --muted: #566b65;
-  --line: #cddad5;
-  --accent: #1d7a5a;
-  --accent-ink: #ffffff;
-  --accent-soft: #dcefe7;
-  --good: #187a43;
-  --good-bg: #dff2e6;
-  --bad: #b0321e;
-  --bad-bg: #fae6e1;
-  --warn-bg: #fdf0d3;
-  --warn: #7a5200;
-  --display: "Bricolage Grotesque", "Trebuchet MS", system-ui, sans-serif;
-  --body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --bg: #081423;
+  --surface: #0f2236;
+  --ink: #e8f1f7;
+  --muted: #8fa6b8;
+  --line: #1f3a52;
+  --accent: #22d67f;
+  --accent-ink: #04210f;
+  --accent-soft: #12372f;
+  --good: #3ddc8b;
+  --good-bg: #0f3a2a;
+  --bad: #ff8a78;
+  --bad-bg: #3b1d1d;
+  --warn-bg: #3a3016;
+  --warn: #f2c869;
+  --display: "Sora", "Trebuchet MS", system-ui, sans-serif;
+  --body: "Manrope", system-ui, -apple-system, "Segoe UI", sans-serif;
   --mono: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
-}
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --bg: #0e1917; --surface: #15241f; --ink: #e5f0ec; --muted: #91a9a2; --line: #2a3f38;
-    --accent: #4cc79b; --accent-ink: #082016; --accent-soft: #1b3a30;
-    --good: #5fd48e; --good-bg: #17382a; --bad: #ff8f7a; --bad-bg: #3d1f19;
-    --warn-bg: #3b3017; --warn: #f1c867;
-    color-scheme: dark;
-  }
-}
-:root[data-theme="dark"] {
-  --bg: #0e1917; --surface: #15241f; --ink: #e5f0ec; --muted: #91a9a2; --line: #2a3f38;
-  --accent: #4cc79b; --accent-ink: #08201a; --accent-soft: #1b3a30;
-  --good: #5fd48e; --good-bg: #17382a; --bad: #ff8f7a; --bad-bg: #3d1f19;
-  --warn-bg: #3b3017; --warn: #f1c867;
   color-scheme: dark;
 }
 * { box-sizing: border-box; }
 body {
   background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 16px; line-height: 1.5;
+  background-image: radial-gradient(900px 420px at 85% -80px, #0f3b3a 0%, transparent 70%);
   padding-block: 24px 64px;
   padding-left: max(16px, env(safe-area-inset-left, 0px));
   padding-right: max(16px, env(safe-area-inset-right, 0px));
 }
-.wrap { max-width: 720px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
+.wrap { max-width: 1040px; margin: 0 auto; display: flex; flex-direction: column; gap: 28px; }
+.col { max-width: 720px; width: 100%; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; scroll-margin-top: 16px; }
 .eyebrow { font-family: var(--mono); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); margin: 0; }
 h1 { font-family: var(--display); font-weight: 800; font-size: clamp(28px, 6vw, 40px); line-height: 1.1; margin: 6px 0 0; text-wrap: balance; }
 h2 { font-family: var(--display); font-weight: 600; font-size: 20px; margin: 0; text-wrap: balance; }
 .lede { color: var(--muted); margin: 8px 0 0; max-width: 60ch; }
-.card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 20px; min-width: 0; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 20px; min-width: 0; }
 .gate { display: flex; flex-direction: column; gap: 16px; }
 .field { display: flex; flex-direction: column; gap: 6px; }
 label.lbl { font-weight: 600; font-size: 14px; }
@@ -64,8 +51,8 @@ input[type="text"]:focus-visible, input[type="tel"]:focus-visible, button:focus-
 }
 .err { color: var(--bad); font-size: 14px; margin: 0; min-height: 20px; }
 .btn {
-  font: inherit; font-weight: 600; background: var(--accent); color: var(--accent-ink); border: 0; border-radius: 8px;
-  padding: 14px 20px; min-height: 48px; cursor: pointer; align-self: flex-start;
+  font: inherit; font-weight: 600; background: var(--accent); color: var(--accent-ink); border: 0; border-radius: 6px;
+  padding: 14px 22px; min-height: 48px; cursor: pointer; align-self: flex-start; letter-spacing: .01em;
 }
 .btn:hover { filter: brightness(1.08); }
 .btn.ghost { background: transparent; color: var(--ink); border: 1.5px solid var(--line); }
@@ -133,16 +120,76 @@ a.btn { display: inline-block; text-decoration: none; text-align: center; }
 .tbl tr:last-child td { border-bottom: 0; }
 .teacher-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
 .teacher-head .btn { padding: 8px 14px; min-height: 40px; }
+
+/* nav */
+.nav { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding-top: 4px; }
+.brand { display: flex; align-items: center; gap: 10px; font-family: var(--display); font-weight: 800; font-size: 20px; color: var(--ink); text-decoration: none; }
+.hexicon { width: 26px; height: 24px; background: var(--accent); clip-path: polygon(25% 4%, 75% 4%, 100% 50%, 75% 96%, 25% 96%, 0 50%); flex: none; }
+.nav-links { display: flex; gap: 24px; margin-left: auto; margin-right: 8px; }
+.nav-links a { color: var(--muted); text-decoration: none; font-weight: 600; font-size: 15px; }
+.nav-links a:hover { color: var(--ink); }
+.btn.sm { padding: 10px 16px; min-height: 40px; font-size: 14px; }
+a.btn:focus-visible, .nav a:focus-visible, .contact a:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+/* hero */
+.hero { position: relative; overflow: hidden; display: grid; grid-template-columns: 1.25fr 1fr; gap: 32px; align-items: center;
+  background: linear-gradient(135deg, #0d2d3d 0%, #0a1a2c 55%, #081423 100%); border: 1px solid var(--line); border-radius: 12px;
+  padding: clamp(24px, 5vw, 52px); }
+.hero::before { content: ""; position: absolute; top: 0; right: 0; width: clamp(110px, 22vw, 220px); aspect-ratio: 1; background: var(--accent); clip-path: polygon(100% 0, 100% 100%, 0 0); opacity: .95; }
+.hero-text { position: relative; min-width: 0; }
+.hero h1 { font-size: clamp(30px, 5vw, 48px); line-height: 1.08; margin: 10px 0 0; }
+.hero .lede { font-size: 17px; margin-top: 16px; }
+.hero-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 28px; }
+.hexes { position: relative; display: flex; flex-direction: column; align-items: center; min-width: 0; }
+.hexrow { display: flex; gap: 8px; }
+.hexrow + .hexrow { margin-top: -26px; }
+.hex { width: 148px; height: 134px; background: var(--accent); clip-path: polygon(25% 3%, 75% 3%, 100% 50%, 75% 97%, 25% 97%, 0 50%); display: grid; place-items: center; }
+.hex > div { width: calc(100% - 4px); height: calc(100% - 4px); background: var(--surface); clip-path: polygon(25% 3%, 75% 3%, 100% 50%, 75% 97%, 25% 97%, 0 50%); display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 0 22px; }
+.hex.solid > div { background: var(--accent); color: var(--accent-ink); }
+.hex b { font-family: var(--display); font-size: 28px; line-height: 1; }
+.hex span { font-size: 12px; font-weight: 600; margin-top: 4px; line-height: 1.2; }
+/* contact */
+.contact { background: var(--surface); border: 1px solid var(--line); border-top: 4px solid var(--accent); border-radius: 8px; padding: clamp(20px, 4vw, 36px); display: flex; flex-direction: column; gap: 20px; scroll-margin-top: 16px; }
+.contact h2 { font-size: clamp(22px, 4vw, 30px); }
+.contact p { margin: 0; color: var(--muted); max-width: 62ch; }
+.contact-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
+.cbox { background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 18px; display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.cbox .tag { font-family: var(--mono); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
+.cbox .phone { font-family: var(--mono); font-size: 22px; font-weight: 500; user-select: all; overflow-wrap: anywhere; }
+.cbox .row { display: flex; flex-wrap: wrap; gap: 8px; }
+.cbox .btn { padding: 10px 14px; min-height: 42px; font-size: 14px; }
+.foot { text-align: center; justify-content: center; padding-bottom: 8px; }
+@media (max-width: 760px) {
+  .hero { grid-template-columns: 1fr; }
+  .nav-links { display: none; }
+  .nav .btn.sm { margin-left: auto; }
+}
 @media (prefers-reduced-motion: reduce) { .fill { transition: none; } }
 </style>
 
 <div class="wrap">
-  <header>
-    <p class="eyebrow">IGCSE Biology 0610 · Topic 1</p>
-    <h1>Characteristics and Classification of Living Organisms</h1>
-    <p class="lede">15 multiple-choice questions. You get your mark and the correct answers with explanations after you submit.</p>
+  <nav class="nav">
+    <a class="brand" href="#top"><span class="hexicon" aria-hidden="true"></span>BioNerds</a>
+    <div class="nav-links"><a href="#quiz-start">Quiz</a><a href="#contact">Contact us</a></div>
+    <a class="btn sm" href="#contact">More quizzes</a>
+  </nav>
+
+  <header class="hero" id="top">
+    <div class="hero-text">
+      <p class="eyebrow">IGCSE Biology 0610 · Topic 1</p>
+      <h1>Test your biology and get your mark straight away</h1>
+      <p class="lede">15 multiple-choice questions on characteristics and classification of living organisms. After you submit you see your mark, the correct answer and a short explanation for every question.</p>
+      <div class="hero-actions">
+        <a class="btn" href="#quiz-start">Start the quiz</a>
+        <a class="btn ghost" href="#contact">Contact us</a>
+      </div>
+    </div>
+    <div class="hexes" aria-hidden="true">
+      <div class="hexrow"><div class="hex"><div><b>15</b><span>questions</span></div></div><div class="hex solid"><div><b>Topic 1</b><span>classification</span></div></div></div>
+      <div class="hexrow"><div class="hex"><div><b>Instant</b><span>mark and answers</span></div></div></div>
+    </div>
   </header>
 
+  <div class="col" id="quiz-start">
   <!-- Teacher view: only shown to people who can edit this page -->
   <section class="card" id="teacher" hidden style="display:flex;flex-direction:column;gap:12px">
     <div class="teacher-head">
@@ -184,10 +231,40 @@ a.btn { display: inline-block; text-decoration: none; text-align: center; }
     </div>
   </section>
 
-  <p class="meta" id="ver">Quiz version 2026-10-20 d</p>
-
   <!-- Step 3: results -->
   <section id="result" hidden style="display:flex;flex-direction:column;gap:16px"></section>
+  </div>
+
+  <section class="contact" id="contact">
+    <p class="eyebrow">Contact us</p>
+    <h2>Want more quizzes and classified questions?</h2>
+    <p>Message us on WhatsApp or call, and join the group to get new quizzes as they are added.</p>
+    <div class="contact-grid">
+      <div class="cbox">
+        <span class="tag">Phone / WhatsApp</span>
+        <span class="phone">01092855505</span>
+        <div class="row">
+          <a class="btn" href="https://wa.me/201092855505" target="_blank" rel="noopener">WhatsApp</a>
+          <a class="btn ghost" href="tel:+201092855505">Call</a>
+        </div>
+      </div>
+      <div class="cbox">
+        <span class="tag">Phone / WhatsApp</span>
+        <span class="phone">01091892888</span>
+        <div class="row">
+          <a class="btn" href="https://wa.me/201091892888" target="_blank" rel="noopener">WhatsApp</a>
+          <a class="btn ghost" href="tel:+201091892888">Call</a>
+        </div>
+      </div>
+      <div class="cbox">
+        <span class="tag">WhatsApp group</span>
+        <span>New quizzes and classified questions are shared here.</span>
+        <div class="row"><a class="btn" href="https://chat.whatsapp.com/KcVRHSg7YDd5eoj2WYrubt" target="_blank" rel="noopener">Join the group</a></div>
+      </div>
+    </div>
+  </section>
+
+  <p class="meta foot" id="ver">Quiz version 2026-10-20 e</p>
 </div>
 
 <script>
