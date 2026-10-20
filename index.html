@@ -184,6 +184,8 @@ a.btn { display: inline-block; text-decoration: none; text-align: center; }
     </div>
   </section>
 
+  <p class="meta" id="ver">Quiz version 2026-10-20 c</p>
+
   <!-- Step 3: results -->
   <section id="result" hidden style="display:flex;flex-direction:column;gap:16px"></section>
 </div>
@@ -304,7 +306,7 @@ function offerManualCopy(score, total) {
 }
 
 /* Paste the Google Apps Script web app address between the quotes. Leave empty to turn sheet saving off. */
-var SHEET_URL = "https://script.google.com/macros/s/AKfycby0jCXkBadWgPApyuQPSTpzdjhEL9yso0MwSMrAkGVhzbthjLRfBYNwpdyv1UhSGHg/exec";
+var SHEET_URL = "https://script.google.com/macros/s/AKfycbynvHcTZHfhVeDWOBBSz_Ip7xKIcJy0YScxgv08t_6Hz0QnJOKmw9FQzBkGN7YWW913/exec";
 
 async function sendToSheet(score, total, pct) {
   if (!SHEET_URL) return false;
