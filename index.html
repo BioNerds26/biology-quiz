@@ -184,7 +184,7 @@ a.btn { display: inline-block; text-decoration: none; text-align: center; }
     </div>
   </section>
 
-  <p class="meta" id="ver">Quiz version 2026-10-20 c</p>
+  <p class="meta" id="ver">Quiz version 2026-10-20 d</p>
 
   <!-- Step 3: results -->
   <section id="result" hidden style="display:flex;flex-direction:column;gap:16px"></section>
@@ -311,14 +311,22 @@ var SHEET_URL = "https://script.google.com/macros/s/AKfycbynvHcTZHfhVeDWOBBSz_Ip
 async function sendToSheet(score, total, pct) {
   if (!SHEET_URL) return false;
   try {
-    await fetch(SHEET_URL, {
-      method: "POST", mode: "no-cors", keepalive: true,
-      headers: { "Content-Type": "text/plain;charset=utf-8" },
-      body: JSON.stringify({
-        name: person.name, phone: person.phone, score: score, total: total, percent: pct,
-        answers: picked.map(function (p) { return p >= 0 ? LETTERS[p] : "-"; }).join("")
-      })
+    var payload = JSON.stringify({
+      name: person.name, phone: person.phone, score: score, total: total, percent: pct,
+      answers: picked.map(function (p) { return p >= 0 ? LETTERS[p] : "-"; }).join("")
     });
+    var frame = document.createElement("iframe");
+    frame.name = "sheet-frame-" + Date.now();
+    frame.style.display = "none";
+    document.body.appendChild(frame);
+    var form = document.createElement("form");
+    form.method = "POST"; form.action = SHEET_URL; form.target = frame.name; form.style.display = "none";
+    var input = document.createElement("input");
+    input.type = "hidden"; input.name = "payload"; input.value = payload;
+    form.appendChild(input);
+    document.body.appendChild(form);
+    form.submit();
+    setTimeout(function () { form.remove(); frame.remove(); }, 20000);
     return true;
   } catch (e) { return false; }
 }
