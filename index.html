@@ -303,10 +303,27 @@ function offerManualCopy(score, total) {
   });
 }
 
-async function saveResult(score, total, pct) {
-  setSave(true, "Sending your result to your teacher…");
+/* Paste the Google Apps Script web app address between the quotes. Leave empty to turn sheet saving off. */
+var SHEET_URL = "https://script.google.com/macros/s/AKfycby0jCXkBadWgPApyuQPSTpzdjhEL9yso0MwSMrAkGVhzbthjLRfBYNwpdyv1UhSGHg/exec";
+
+async function sendToSheet(score, total, pct) {
+  if (!SHEET_URL) return false;
   try {
-    if (!dbRef || !myId) throw new Error("not available");
+    await fetch(SHEET_URL, {
+      method: "POST", mode: "no-cors", keepalive: true,
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify({
+        name: person.name, phone: person.phone, score: score, total: total, percent: pct,
+        answers: picked.map(function (p) { return p >= 0 ? LETTERS[p] : "-"; }).join("")
+      })
+    });
+    return true;
+  } catch (e) { return false; }
+}
+
+async function sendToDb(score, total, pct) {
+  try {
+    if (!dbRef || !myId) return false;
     var ref = dbRef.doc("submissions/" + myId);
     var attempts = 1;
     try {
@@ -318,10 +335,15 @@ async function saveResult(score, total, pct) {
       answers: picked.map(function (p) { return p >= 0 ? LETTERS[p] : "-"; }).join(""),
       submittedAt: new Date().toISOString()
     });
-    setSave(true, "Your result was sent to your teacher.");
-  } catch (e) {
-    offerManualCopy(score, total);
-  }
+    return true;
+  } catch (e) { return false; }
+}
+
+async function saveResult(score, total, pct) {
+  setSave(true, "Sending your result to your teacher\u2026");
+  var r = await Promise.all([sendToSheet(score, total, pct), sendToDb(score, total, pct)]);
+  if (r[0] || r[1]) setSave(true, "Your result was sent to your teacher.");
+  else offerManualCopy(score, total);
 }
 function esc(s) {
   return String(s).replace(/[&<>"']/g, function (c) {
