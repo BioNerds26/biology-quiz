@@ -1,0 +1,298 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>BioNerds Admin</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@600;800&family=Manrope:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+/* Layout: one narrow column. Password screen first, then quiz editor, then the list of saved quizzes. */
+:root {
+  --bg: #081423; --surface: #0f2236; --ink: #e8f1f7; --muted: #8fa6b8; --line: #1f3a52;
+  --accent: #22d67f; --accent-ink: #04210f; --bad: #ff8a78; --good: #3ddc8b;
+  --display: "Sora", "Trebuchet MS", system-ui, sans-serif;
+  --body: "Manrope", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+body {
+  margin: 0; background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 16px; line-height: 1.5;
+  background-image: radial-gradient(900px 420px at 85% -80px, #0f3b3a 0%, transparent 70%);
+  padding-block: 24px 64px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.wrap { max-width: 760px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
+.brand { display: flex; align-items: center; gap: 10px; font-family: var(--display); font-weight: 800; font-size: 20px; }
+.hexicon { width: 26px; height: 24px; background: var(--accent); clip-path: polygon(25% 4%, 75% 4%, 100% 50%, 75% 96%, 25% 96%, 0 50%); }
+.tag { font-family: var(--mono); font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
+h1, h2 { font-family: var(--display); margin: 0; text-wrap: balance; }
+h1 { font-size: clamp(26px, 5vw, 36px); }
+h2 { font-size: 20px; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 20px; display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.field { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+label, .lbl { font-weight: 600; font-size: 14px; }
+input[type="text"], input[type="password"], textarea {
+  font: inherit; color: var(--ink); background: var(--bg); border: 1.5px solid var(--line); border-radius: 8px;
+  padding: 11px 13px; width: 100%; min-height: 46px;
+}
+textarea { min-height: 76px; resize: vertical; }
+input:focus-visible, textarea:focus-visible, button:focus-visible, select:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.btn { font: inherit; font-weight: 600; background: var(--accent); color: var(--accent-ink); border: 0; border-radius: 6px; padding: 12px 20px; min-height: 46px; cursor: pointer; }
+.btn:hover { filter: brightness(1.08); }
+.btn.ghost { background: transparent; color: var(--ink); border: 1.5px solid var(--line); }
+.btn.danger { background: transparent; color: var(--bad); border: 1.5px solid var(--bad); }
+.btn.sm { padding: 8px 14px; min-height: 38px; font-size: 14px; }
+.row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.msg { margin: 0; font-size: 14px; min-height: 20px; color: var(--muted); }
+.msg.bad { color: var(--bad); }
+.msg.good { color: var(--good); }
+.qblock { border: 1px solid var(--line); border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 12px; background: var(--bg); }
+.qhead { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.opt { display: flex; align-items: center; gap: 10px; }
+.opt .letter { font-family: var(--mono); color: var(--muted); width: 1.5ch; flex: none; }
+.opt input[type="radio"] { width: 20px; height: 20px; accent-color: var(--accent); flex: none; }
+.opt input[type="text"] { flex: 1; min-width: 0; }
+.hint { font-size: 13px; color: var(--muted); margin: 0; }
+.qrow { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 0; border-top: 1px solid var(--line); flex-wrap: wrap; }
+.qrow:first-child { border-top: 0; }
+.qrow b { overflow-wrap: anywhere; }
+.qrow small { display: block; color: var(--muted); font-family: var(--mono); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brand"><span class="hexicon" aria-hidden="true"></span>BioNerds admin</div>
+
+  <section class="card" id="login">
+    <span class="tag">Teacher only</span>
+    <h1>Admin sign in</h1>
+    <div class="field">
+      <label for="pw">Admin password</label>
+      <input type="password" id="pw" autocomplete="current-password">
+    </div>
+    <p class="msg" id="login-msg" role="alert"></p>
+    <div class="row"><button class="btn" type="button" id="login-btn">Sign in</button></div>
+  </section>
+
+  <div id="app" hidden style="display:flex;flex-direction:column;gap:20px">
+    <section class="card">
+      <span class="tag">New quiz</span>
+      <h1>Add a quiz</h1>
+      <div class="field">
+        <label for="title">Quiz title</label>
+        <input type="text" id="title" placeholder="e.g. IGCSE Biology Topic 2: Cells" maxlength="120">
+      </div>
+      <div id="questions" style="display:flex;flex-direction:column;gap:14px"></div>
+      <div class="row">
+        <button class="btn ghost" type="button" id="add-q">Add question</button>
+        <button class="btn" type="button" id="save">Save quiz</button>
+      </div>
+      <p class="msg" id="save-msg" role="status"></p>
+    </section>
+
+    <section class="card">
+      <h2>Saved quizzes</h2>
+      <div id="list"><p class="msg">Loading…</p></div>
+      <p class="msg" id="list-msg"></p>
+    </section>
+  </div>
+</div>
+
+<script>
+/* Same Google Apps Script web app address as the student page. */
+var SHEET_URL = "https://script.google.com/macros/s/AKfycbxkYddRCaVsQfkuK7UJDMlanA4ZMoWhFyPRE0XN1Jx3DrMXuEo3NCtSkv8KJlzhNkgT/exec";
+var LETTERS = ["A", "B", "C", "D"];
+var pw = "";
+var qCount = 0;
+
+function $(id) { return document.getElementById(id); }
+function esc(s) {
+  return String(s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; });
+}
+function setMsg(id, text, kind) { var el = $(id); el.textContent = text; el.className = "msg" + (kind ? " " + kind : ""); }
+
+function api(params) {
+  var u = new URL(SHEET_URL);
+  Object.keys(params).forEach(function (k) { u.searchParams.set(k, params[k]); });
+  u.searchParams.set("t", Date.now());
+  return fetch(u.toString()).then(function (r) { return r.json(); });
+}
+
+/* The script cannot answer a form post, so a save is confirmed by reading the list again. */
+function postForm(obj) {
+  var frame = document.createElement("iframe");
+  frame.name = "post-frame-" + Date.now() + Math.random().toString(36).slice(2, 6);
+  frame.style.display = "none";
+  document.body.appendChild(frame);
+  var form = document.createElement("form");
+  form.method = "POST"; form.action = SHEET_URL; form.target = frame.name; form.style.display = "none";
+  var input = document.createElement("input");
+  input.type = "hidden"; input.name = "payload"; input.value = JSON.stringify(obj);
+  form.appendChild(input);
+  document.body.appendChild(form);
+  form.submit();
+  setTimeout(function () { form.remove(); frame.remove(); }, 30000);
+}
+
+function waitFor(test, tries) {
+  return new Promise(function (resolve) {
+    var n = 0;
+    (function poll() {
+      api({ action: "list" }).then(function (j) {
+        var list = j && j.ok ? j.quizzes : null;
+        if (list && test(list)) { resolve(list); return; }
+        if (++n >= tries) { resolve(null); return; }
+        setTimeout(poll, 1800);
+      }).catch(function () {
+        if (++n >= tries) { resolve(null); return; }
+        setTimeout(poll, 1800);
+      });
+    })();
+  });
+}
+
+/* sign in */
+function signIn() {
+  var p = $("pw").value;
+  if (!p) { setMsg("login-msg", "Enter the admin password.", "bad"); return; }
+  setMsg("login-msg", "Checking…");
+  api({ action: "check", pw: p }).then(function (j) {
+    if (j && j.ok) {
+      pw = p;
+      try { sessionStorage.setItem("bn_admin_pw", p); } catch (e) {}
+      $("login").hidden = true;
+      $("app").hidden = false;
+      if (!qCount) addQuestion();
+      refreshList();
+    } else {
+      setMsg("login-msg", "Wrong password, or the password is not set yet in the Google script.", "bad");
+    }
+  }).catch(function () {
+    setMsg("login-msg", "Could not reach the server. Check your internet and the script address.", "bad");
+  });
+}
+$("login-btn").addEventListener("click", signIn);
+$("pw").addEventListener("keydown", function (ev) { if (ev.key === "Enter") signIn(); });
+
+/* question editor */
+function addQuestion(pre) {
+  qCount++;
+  var id = qCount;
+  var div = document.createElement("div");
+  div.className = "qblock";
+  var opts = "";
+  for (var i = 0; i < 4; i++) {
+    opts += '<div class="opt"><input type="radio" name="correct' + id + '" value="' + i + '" aria-label="Correct answer ' + LETTERS[i] + '"' + (i === 0 ? " checked" : "") + '>' +
+      '<span class="letter">' + LETTERS[i] + '</span><input type="text" class="o" placeholder="Option ' + LETTERS[i] + (i > 1 ? " (optional)" : "") + '" maxlength="400"></div>';
+  }
+  div.innerHTML = '<div class="qhead"><b class="qnum"></b><button type="button" class="btn danger sm rm">Remove</button></div>' +
+    '<div class="field"><label>Question</label><textarea class="qt" maxlength="1000"></textarea></div>' +
+    '<div class="field"><span class="lbl">Options</span>' + opts + '<p class="hint">Select the circle next to the correct answer. Leave C and D empty for a two-option question.</p></div>' +
+    '<div class="field"><label>Explanation (optional)</label><textarea class="ex" maxlength="1000" placeholder="Why this answer is correct"></textarea></div>';
+  $("questions").appendChild(div);
+  div.querySelector(".rm").addEventListener("click", function () {
+    if ($("questions").children.length > 1) { div.remove(); renumber(); }
+    else setMsg("save-msg", "A quiz needs at least one question.", "bad");
+  });
+  renumber();
+}
+function renumber() {
+  Array.prototype.forEach.call($("questions").children, function (el, i) { el.querySelector(".qnum").textContent = "Question " + (i + 1); });
+}
+$("add-q").addEventListener("click", function () {
+  addQuestion();
+  var last = $("questions").lastElementChild;
+  last.querySelector(".qt").focus();
+});
+
+function collect() {
+  var title = $("title").value.trim();
+  if (!title) return { error: "Enter a quiz title.", focus: $("title") };
+  var blocks = $("questions").children, questions = [];
+  for (var i = 0; i < blocks.length; i++) {
+    var b = blocks[i];
+    var q = b.querySelector(".qt").value.trim();
+    var inputs = b.querySelectorAll(".o");
+    var radios = b.querySelectorAll('input[type="radio"]');
+    var correctRaw = 0;
+    for (var r = 0; r < radios.length; r++) if (radios[r].checked) correctRaw = r;
+    var o = [], a = -1;
+    for (var k = 0; k < inputs.length; k++) {
+      var t = inputs[k].value.trim();
+      if (t) { if (k === correctRaw) a = o.length; o.push(t); }
+    }
+    if (!q) return { error: "Question " + (i + 1) + " has no question text.", focus: b.querySelector(".qt") };
+    if (o.length < 2) return { error: "Question " + (i + 1) + " needs at least two options.", focus: inputs[0] };
+    if (a < 0) return { error: "Question " + (i + 1) + ": the correct answer is empty. Pick a filled option.", focus: inputs[correctRaw] };
+    questions.push({ q: q, o: o, a: a, e: b.querySelector(".ex").value.trim() });
+  }
+  return { quiz: { title: title, questions: questions } };
+}
+
+$("save").addEventListener("click", function () {
+  var res = collect();
+  if (res.error) { setMsg("save-msg", res.error, "bad"); res.focus.focus(); return; }
+  var id = "q" + Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
+  var btn = $("save");
+  btn.disabled = true;
+  setMsg("save-msg", "Saving…");
+  postForm({ action: "save", pw: pw, id: id, quiz: res.quiz });
+  waitFor(function (list) { return list.some(function (q) { return q.id === id; }); }, 8).then(function (list) {
+    btn.disabled = false;
+    if (list) {
+      setMsg("save-msg", "Saved. Students will see “" + res.quiz.title + "” in the quiz list.", "good");
+      $("title").value = "";
+      $("questions").innerHTML = "";
+      qCount = 0;
+      addQuestion();
+      renderList(list);
+    } else {
+      setMsg("save-msg", "The quiz could not be confirmed. Reload the list below. If it is missing, check the script password and that you deployed a new version.", "bad");
+    }
+  });
+});
+
+/* saved quizzes */
+function renderList(list) {
+  if (!list.length) { $("list").innerHTML = '<p class="msg">No quizzes added here yet. The built-in Topic 1 quiz is always shown to students.</p>'; return; }
+  $("list").innerHTML = list.map(function (q) {
+    return '<div class="qrow"><div><b>' + esc(q.title) + '</b><small>' + esc(q.count) + ' questions</small></div>' +
+      '<button type="button" class="btn danger sm del" data-id="' + esc(q.id) + '">Delete</button></div>';
+  }).join("");
+}
+function refreshList() {
+  setMsg("list-msg", "");
+  api({ action: "list" }).then(function (j) {
+    if (j && j.ok) renderList(j.quizzes); else setMsg("list-msg", "Could not load the list.", "bad");
+  }).catch(function () { setMsg("list-msg", "Could not load the list.", "bad"); });
+}
+$("list").addEventListener("click", function (ev) {
+  var btn = ev.target.closest ? ev.target.closest(".del") : null;
+  if (!btn) return;
+  if (!btn.dataset.armed) {
+    btn.dataset.armed = "1";
+    btn.textContent = "Click again to delete";
+    setTimeout(function () { btn.dataset.armed = ""; btn.textContent = "Delete"; }, 4000);
+    return;
+  }
+  var id = btn.getAttribute("data-id");
+  btn.disabled = true;
+  setMsg("list-msg", "Deleting…");
+  postForm({ action: "delete", pw: pw, id: id });
+  waitFor(function (list) { return !list.some(function (q) { return q.id === id; }); }, 8).then(function (list) {
+    if (list) { renderList(list); setMsg("list-msg", "Deleted.", "good"); }
+    else { btn.disabled = false; setMsg("list-msg", "Could not confirm the delete. Reload and check.", "bad"); }
+  });
+});
+
+try {
+  var saved = sessionStorage.getItem("bn_admin_pw");
+  if (saved) { $("pw").value = saved; signIn(); }
+} catch (e) {}
+</script>
+</body>
+</html>
