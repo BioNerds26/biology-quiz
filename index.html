@@ -147,6 +147,15 @@ a.btn:focus-visible, .nav a:focus-visible, .contact a:focus-visible { outline: 3
 .hex.solid > div { background: var(--accent); color: var(--accent-ink); }
 .hex b { font-family: var(--display); font-size: 28px; line-height: 1; }
 .hex span { font-size: 12px; font-weight: 600; margin-top: 4px; line-height: 1.2; }
+/* written questions */
+.q-text { white-space: pre-wrap; }
+.qimg { max-width: 100%; height: auto; border-radius: 8px; border: 1px solid var(--line); background: #fff; align-self: flex-start; }
+textarea.essay { font: inherit; color: var(--ink); background: var(--bg); border: 1.5px solid var(--line); border-radius: 8px; padding: 12px 14px; width: 100%; min-height: 140px; resize: vertical; }
+textarea.essay:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.essay-box { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.essay-box .lbl { font-size: 13px; color: var(--muted); font-weight: 600; }
+.essay-box .pre { white-space: pre-wrap; margin: 0; overflow-wrap: anywhere; }
+.essay-box.ms { border-left: 3px solid var(--accent); padding-left: 12px; }
 /* quiz picker */
 .qlist { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
 .qcard { font: inherit; color: var(--ink); text-align: left; background: var(--bg); border: 1.5px solid var(--line); border-radius: 8px; padding: 16px; cursor: pointer; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
@@ -278,7 +287,7 @@ a.btn:focus-visible, .nav a:focus-visible, .contact a:focus-visible { outline: 3
     </div>
   </section>
 
-  <p class="meta foot" id="ver">Quiz version 2026-10-20 h</p>
+  <p class="meta foot" id="ver">Quiz version 2026-10-21 j</p>
 </div>
 
 <script>
@@ -374,7 +383,20 @@ $("t-copy").addEventListener("click", function () {
 });
 
 function resultText(score, total) {
-  return quizTitle + "\nName: " + person.name + "\nPhone: " + person.phone + "\nMark: " + score + " / " + total;
+  return quizTitle + "\nName: " + person.name + "\nPhone: " + person.phone + "\nMark: " + (total ? score + " / " + total : "written answers only");
+}
+function lettersString() {
+  return QUESTIONS.map(function (item, i) {
+    if (isEssay(item)) return "";
+    return picked[i] >= 0 ? LETTERS[picked[i]] : "-";
+  }).join("");
+}
+function writtenText() {
+  var out = [];
+  QUESTIONS.forEach(function (item, i) {
+    if (isEssay(item)) out.push("Q" + (i + 1) + ": " + (essayText[i] && essayText[i].trim() ? essayText[i] : "(no answer)"));
+  });
+  return out.join("\n\n").slice(0, 40000);
 }
 
 function setSave(ok, html) {
@@ -405,7 +427,8 @@ async function sendToSheet(score, total, pct) {
     var payload = JSON.stringify({
       quiz: quizTitle,
       name: person.name, phone: person.phone, score: score, total: total, percent: pct,
-      answers: picked.map(function (p) { return p >= 0 ? LETTERS[p] : "-"; }).join("")
+      answers: lettersString(),
+      written: writtenText()
     });
     var frame = document.createElement("iframe");
     frame.name = "sheet-frame-" + Date.now();
@@ -434,7 +457,7 @@ async function sendToDb(score, total, pct) {
     } catch (e) {}
     await ref.set({
       name: person.name, phone: person.phone, score: score, total: total, percent: pct, attempts: attempts,
-      answers: picked.map(function (p) { return p >= 0 ? LETTERS[p] : "-"; }).join(""),
+      answers: lettersString(), written: writtenText(),
       submittedAt: new Date().toISOString()
     });
     return true;
@@ -468,6 +491,12 @@ function cleanQuestions(list) {
   var out = [];
   for (var i = 0; i < list.length; i++) {
     var it = list[i];
+    if (it && it.t === "essay") {
+      if (typeof it.q !== "string" || typeof it.ms !== "string") return null;
+      var mk = Math.floor(Number(it.marks));
+      out.push({ t: "essay", q: it.q, ms: it.ms, marks: mk > 0 ? mk : 0, img: (typeof it.img === "string" && /^i[a-z0-9]{6,24}$/.test(it.img)) ? it.img : "" });
+      continue;
+    }
     if (!it || typeof it.q !== "string" || !Array.isArray(it.o) || it.o.length < 2 || it.o.length > 4) return null;
     var a = Number(it.a);
     if (!(a >= 0 && a < it.o.length) || a % 1 !== 0) return null;
@@ -476,13 +505,13 @@ function cleanQuestions(list) {
   return out;
 }
 
-function cardHtml(id, title, n) {
+function cardHtml(id, title, n, essays) {
   return '<button type="button" class="qcard" data-id="' + esc(id) + '"><span class="qt">' + esc(title) +
-    '</span><span class="qm">' + esc(n) + ' questions</span></button>';
+    '</span><span class="qm">' + esc(n) + ' questions' + (Number(essays) > 0 ? ' \u00b7 ' + esc(essays) + ' written' : '') + '</span></button>';
 }
 function renderPicker() {
   var html = cardHtml("builtin", BUILTIN_TITLE, BUILTIN.length);
-  remoteQuizzes.forEach(function (q) { html += cardHtml(q.id, q.title, q.count); });
+  remoteQuizzes.forEach(function (q) { html += cardHtml(q.id, q.title, q.count, q.essays); });
   $("qlist").innerHTML = html;
 }
 function chooseQuiz(title, qs) {
@@ -548,9 +577,47 @@ $("gate").addEventListener("submit", function (ev) {
   window.scrollTo(0, 0);
 });
 
+var essayText = [];
+var imgCache = {};
+var imgLoading = {};
+var listenersBound = false;
+
+function isEssay(item) { return !!item && item.t === "essay"; }
+function imgTag(item) {
+  return item.img ? '<img class="qimg" data-img="' + esc(item.img) + '" alt="Picture for this question" hidden>' : "";
+}
+function fillImages() {
+  var need = {};
+  Array.prototype.forEach.call(document.querySelectorAll("img[data-img]"), function (el) {
+    var id = el.getAttribute("data-img");
+    if (imgCache[id]) { el.src = imgCache[id]; el.hidden = false; } else need[id] = true;
+  });
+  Object.keys(need).forEach(function (id) {
+    if (imgLoading[id]) return;
+    imgLoading[id] = true;
+    fetch(SHEET_URL + "?action=image&id=" + encodeURIComponent(id) + "&t=" + Date.now())
+      .then(function (r) { return r.json(); })
+      .then(function (j) {
+        if (j && j.ok && typeof j.data === "string" && /^data:image\/(jpeg|png|webp);base64,/.test(j.data)) {
+          imgCache[id] = j.data;
+          fillImages();
+        } else { imgLoading[id] = false; }
+      })
+      .catch(function () { imgLoading[id] = false; });
+  });
+}
+
 function buildQuiz() {
+  essayText = new Array(QUESTIONS.length).fill("");
   var html = "";
   QUESTIONS.forEach(function (item, i) {
+    if (isEssay(item)) {
+      html += '<fieldset class="card q" id="q' + i + '" style="margin:0"><div class="q-head"><span class="q-num">' + (i + 1) + '</span>' +
+        '<legend class="q-text" style="padding:0">' + esc(item.q) + '</legend></div>' + imgTag(item) +
+        '<p class="meta" style="margin:0">Written question' + (item.marks ? ' · ' + esc(item.marks) + ' marks' : '') + '. You will see the mark scheme after you submit.</p>' +
+        '<textarea class="essay" id="t' + i + '" data-i="' + i + '" maxlength="5000" placeholder="Type your answer here" aria-label="Your answer to question ' + (i + 1) + '"></textarea></fieldset>';
+      return;
+    }
     html += '<fieldset class="card q" id="q' + i + '" style="margin:0"><div class="q-head"><span class="q-num">' + (i + 1) + '</span>' +
       '<legend class="q-text" style="padding:0">' + esc(item.q) + '</legend></div><div class="opts">';
     item.o.forEach(function (text, j) {
@@ -560,16 +627,30 @@ function buildQuiz() {
     html += "</div></fieldset>";
   });
   $("qs").innerHTML = html;
-  $("qs").addEventListener("change", function (ev) {
-    var t = ev.target;
-    if (t && t.type === "radio") {
-      var qi = parseInt(t.name.slice(1), 10);
-      picked[qi] = parseInt(t.value, 10);
-      $("q" + qi).classList.remove("missing");
-      updateProgress();
-    }
-  });
+  if (!listenersBound) {
+    listenersBound = true;
+    $("qs").addEventListener("change", function (ev) {
+      var t = ev.target;
+      if (t && t.type === "radio") {
+        var qi = parseInt(t.name.slice(1), 10);
+        picked[qi] = parseInt(t.value, 10);
+        $("q" + qi).classList.remove("missing");
+        updateProgress();
+      }
+    });
+    $("qs").addEventListener("input", function (ev) {
+      var t = ev.target;
+      if (t && t.classList && t.classList.contains("essay")) {
+        var qi = parseInt(t.getAttribute("data-i"), 10);
+        essayText[qi] = t.value;
+        picked[qi] = t.value.trim() ? 1 : -1;
+        if (picked[qi] >= 0) $("q" + qi).classList.remove("missing");
+        updateProgress();
+      }
+    });
+  }
   updateProgress();
+  fillImages();
 }
 
 function answeredCount() { return picked.filter(function (x) { return x >= 0; }).length; }
@@ -588,7 +669,7 @@ $("submit").addEventListener("click", function () {
     missing.forEach(function (i) { $("q" + i).classList.add("missing"); });
     var list = missing.map(function (i) { return i + 1; }).join(", ");
     $("notice").textContent = "You have not answered question" + (missing.length > 1 ? "s " : " ") + list +
-      ". Answer them, or press Submit answers again to finish with them marked wrong.";
+      ". Answer them, or press Submit answers again to finish without them.";
     $("notice").hidden = false;
     $("q" + missing[0]).scrollIntoView({ behavior: "smooth", block: "center" });
     return;
@@ -604,18 +685,36 @@ function gradeLine(pct) {
 }
 
 function showResult() {
-  var score = 0;
-  QUESTIONS.forEach(function (item, i) { if (picked[i] === item.a) score++; });
-  var total = QUESTIONS.length;
-  var pct = Math.round(score / total * 100);
-  var html = '<div class="card score"><div class="big">' + score + '<small> / ' + total + '</small></div>' +
+  var score = 0, total = 0, essays = 0;
+  QUESTIONS.forEach(function (item, i) {
+    if (isEssay(item)) { essays++; return; }
+    total++;
+    if (picked[i] === item.a) score++;
+  });
+  var pct = total ? Math.round(score / total * 100) : 0;
+  var banner = total
+    ? '<div class="big">' + score + '<small> / ' + total + '</small></div>'
+    : '<div class="big" style="font-size:clamp(32px,9vw,48px)">Submitted</div>';
+  var pills = '';
+  if (total) pills += '<span class="pill">' + pct + '%</span><span class="pill">' + gradeLine(pct) + '</span><span class="pill">' + (total - score) + ' to review</span>';
+  if (essays) pills += '<span class="pill">' + essays + ' written to self-mark</span>';
+  var html = '<div class="card score">' + banner +
     '<div class="who"><b>' + esc(person.name) + '</b><span>' + esc(person.phone) + '</span>' +
-    '<div class="pills"><span class="pill">' + pct + '%</span><span class="pill">' + gradeLine(pct) + '</span>' +
-    '<span class="pill">' + (total - score) + ' to review</span></div></div></div>' +
+    '<div class="pills">' + pills + '</div></div></div>' +
     '<div class="save" id="save-status" role="status"></div>' +
     '<a class="btn" id="wa" href="https://chat.whatsapp.com/KcVRHSg7YDd5eoj2WYrubt" target="_blank" rel="noopener">Join our WhatsApp group for more quizzes and classified questions</a>';
   html += '<h2 style="margin-top:8px">Your answers</h2>';
   QUESTIONS.forEach(function (item, i) {
+    if (isEssay(item)) {
+      var txt = essayText[i] && essayText[i].trim() ? esc(essayText[i]) : '<i>No answer</i>';
+      html += '<article class="card rev"><div class="status" style="color:var(--accent)">Question ' + (i + 1) + ' · Written answer' +
+        (item.marks ? ' · ' + esc(item.marks) + ' marks' : '') + '</div>' +
+        '<p class="q-text" style="margin:0">' + esc(item.q) + '</p>' + imgTag(item) +
+        '<div class="essay-box"><span class="lbl">Your answer</span><p class="pre">' + txt + '</p></div>' +
+        '<div class="essay-box ms"><span class="lbl">Mark scheme</span><p class="pre">' + esc(item.ms) + '</p></div>' +
+        '<p class="why">Compare your answer with the mark scheme and give yourself marks.</p></article>';
+      return;
+    }
     var ok = picked[i] === item.a;
     var mine = picked[i] >= 0 ? LETTERS[picked[i]] + ". " + item.o[picked[i]] : "No answer";
     html += '<article class="card rev ' + (ok ? "ok" : "no") + '">' +
@@ -630,6 +729,7 @@ function showResult() {
   r.innerHTML = html;
   r.hidden = false;
   $("quiz").hidden = true;
+  fillImages();
   $("another").addEventListener("click", function () { window.location.reload(); });
   $("retake").addEventListener("click", function () {
     picked = new Array(QUESTIONS.length).fill(-1);

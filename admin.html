@@ -61,6 +61,7 @@ input:focus-visible, textarea:focus-visible, button:focus-visible, select:focus-
 .qrow:first-child { border-top: 0; }
 .qrow b { overflow-wrap: anywhere; }
 .qrow small { display: block; color: var(--muted); font-family: var(--mono); }
+select { font: inherit; color: var(--ink); background: var(--bg); border: 1.5px solid var(--line); border-radius: 8px; padding: 11px 13px; min-height: 46px; width: 100%; }
 </style>
 </head>
 <body>
@@ -179,7 +180,7 @@ $("login-btn").addEventListener("click", signIn);
 $("pw").addEventListener("keydown", function (ev) { if (ev.key === "Enter") signIn(); });
 
 /* question editor */
-function addQuestion(pre) {
+function addQuestion() {
   qCount++;
   var id = qCount;
   var div = document.createElement("div");
@@ -190,15 +191,101 @@ function addQuestion(pre) {
       '<span class="letter">' + LETTERS[i] + '</span><input type="text" class="o" placeholder="Option ' + LETTERS[i] + (i > 1 ? " (optional)" : "") + '" maxlength="400"></div>';
   }
   div.innerHTML = '<div class="qhead"><b class="qnum"></b><button type="button" class="btn danger sm rm">Remove</button></div>' +
+    '<div class="field"><label>Question type</label><select class="qtype"><option value="mc">Multiple choice</option><option value="essay">Written question (student types an answer)</option></select></div>' +
     '<div class="field"><label>Question</label><textarea class="qt" maxlength="1000"></textarea></div>' +
-    '<div class="field"><span class="lbl">Options</span>' + opts + '<p class="hint">Select the circle next to the correct answer. Leave C and D empty for a two-option question.</p></div>' +
-    '<div class="field"><label>Explanation (optional)</label><textarea class="ex" maxlength="1000" placeholder="Why this answer is correct"></textarea></div>';
+    '<div class="mc-sec">' +
+      '<div class="field"><span class="lbl">Options</span>' + opts + '<p class="hint">Select the circle next to the correct answer. Leave C and D empty for a two-option question.</p></div>' +
+      '<div class="field"><label>Explanation (optional)</label><textarea class="ex" maxlength="1000" placeholder="Why this answer is correct"></textarea></div>' +
+    '</div>' +
+    '<div class="essay-sec" hidden>' +
+      '<div class="field"><label>Marks for this question</label><input type="number" class="marks" min="1" max="100" step="1" placeholder="e.g. 4"></div>' +
+      '<div class="field"><label>Picture (optional)</label><input type="file" class="pic" accept="image/*">' +
+        '<img class="pic-prev" alt="Preview of the question picture" hidden style="max-width:100%;max-height:260px;border-radius:6px;border:1px solid var(--line)">' +
+        '<div class="row"><button type="button" class="btn ghost sm pic-clear" hidden>Remove picture</button></div>' +
+        '<p class="hint">Students see this picture with the question.</p></div>' +
+      '<div class="field"><label>Mark scheme</label><textarea class="ms" maxlength="3000" placeholder="The model answer and how the marks are given. Students see this after they submit."></textarea></div>' +
+    '</div>';
   $("questions").appendChild(div);
+  var typeSel = div.querySelector(".qtype");
+  typeSel.addEventListener("change", function () {
+    var essay = typeSel.value === "essay";
+    div.querySelector(".mc-sec").hidden = essay;
+    div.querySelector(".essay-sec").hidden = !essay;
+  });
+  var pic = div.querySelector(".pic"), prev = div.querySelector(".pic-prev"), clearBtn = div.querySelector(".pic-clear");
+  pic.addEventListener("change", function () {
+    var f = pic.files && pic.files[0];
+    if (!f) return;
+    if (!/^image\//.test(f.type)) { setMsg("save-msg", "That file is not a picture. Choose a JPG, PNG or WebP image.", "bad"); pic.value = ""; return; }
+    setMsg("save-msg", "Preparing the picture\u2026");
+    shrink(f).then(function (d) {
+      div._pending = d; div._imgId = "";
+      prev.src = d; prev.hidden = false; clearBtn.hidden = false;
+      setMsg("save-msg", "");
+    }).catch(function () {
+      setMsg("save-msg", "Could not read that picture. Try a smaller one.", "bad");
+      pic.value = "";
+    });
+  });
+  clearBtn.addEventListener("click", function () {
+    div._pending = ""; div._imgId = ""; pic.value = "";
+    prev.hidden = true; prev.removeAttribute("src"); clearBtn.hidden = true;
+  });
   div.querySelector(".rm").addEventListener("click", function () {
     if ($("questions").children.length > 1) { div.remove(); renumber(); }
     else setMsg("save-msg", "A quiz needs at least one question.", "bad");
   });
   renumber();
+}
+/* Shrinks a picture so it fits the sheet cell limit. */
+function shrink(file) {
+  return new Promise(function (resolve, reject) {
+    var reader = new FileReader();
+    reader.onerror = reject;
+    reader.onload = function () {
+      var img = new Image();
+      img.onerror = reject;
+      img.onload = function () {
+        var sizes = [1000, 800, 600], quals = [0.8, 0.7, 0.6];
+        for (var s = 0; s < sizes.length; s++) {
+          var scale = Math.min(1, sizes[s] / Math.max(img.width, img.height));
+          var c = document.createElement("canvas");
+          c.width = Math.max(1, Math.round(img.width * scale));
+          c.height = Math.max(1, Math.round(img.height * scale));
+          var ctx = c.getContext("2d");
+          ctx.fillStyle = "#ffffff"; ctx.fillRect(0, 0, c.width, c.height);
+          ctx.drawImage(img, 0, 0, c.width, c.height);
+          for (var q = 0; q < quals.length; q++) {
+            var d = c.toDataURL("image/jpeg", quals[q]);
+            if (d.length <= 390000) { resolve(d); return; }
+          }
+        }
+        reject(new Error("too large"));
+      };
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+function waitForImage(iid, tries) {
+  return new Promise(function (resolve) {
+    var n = 0;
+    (function poll() {
+      api({ action: "image", id: iid }).then(function (j) {
+        if (j && j.ok && typeof j.data === "string") { resolve(true); return; }
+        if (++n >= tries) { resolve(false); return; }
+        setTimeout(poll, 1800);
+      }).catch(function () {
+        if (++n >= tries) { resolve(false); return; }
+        setTimeout(poll, 1800);
+      });
+    })();
+  });
+}
+function uploadImage(data) {
+  var iid = "i" + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+  postForm({ action: "saveimage", pw: pw, id: iid, data: data });
+  return waitForImage(iid, 8).then(function (ok) { return ok ? iid : ""; });
 }
 function renumber() {
   Array.prototype.forEach.call($("questions").children, function (el, i) { el.querySelector(".qnum").textContent = "Question " + (i + 1); });
@@ -216,6 +303,15 @@ function collect() {
   for (var i = 0; i < blocks.length; i++) {
     var b = blocks[i];
     var q = b.querySelector(".qt").value.trim();
+    if (!q) return { error: "Question " + (i + 1) + " has no question text.", focus: b.querySelector(".qt") };
+    if (b.querySelector(".qtype").value === "essay") {
+      var marks = parseInt(b.querySelector(".marks").value, 10);
+      var ms = b.querySelector(".ms").value.trim();
+      if (!(marks >= 1 && marks <= 100)) return { error: "Question " + (i + 1) + ": enter the marks (1 to 100).", focus: b.querySelector(".marks") };
+      if (!ms) return { error: "Question " + (i + 1) + ": add the mark scheme.", focus: b.querySelector(".ms") };
+      questions.push({ t: "essay", q: q, ms: ms, marks: marks, img: "" });
+      continue;
+    }
     var inputs = b.querySelectorAll(".o");
     var radios = b.querySelectorAll('input[type="radio"]');
     var correctRaw = 0;
@@ -225,12 +321,33 @@ function collect() {
       var t = inputs[k].value.trim();
       if (t) { if (k === correctRaw) a = o.length; o.push(t); }
     }
-    if (!q) return { error: "Question " + (i + 1) + " has no question text.", focus: b.querySelector(".qt") };
     if (o.length < 2) return { error: "Question " + (i + 1) + " needs at least two options.", focus: inputs[0] };
     if (a < 0) return { error: "Question " + (i + 1) + ": the correct answer is empty. Pick a filled option.", focus: inputs[correctRaw] };
     questions.push({ q: q, o: o, a: a, e: b.querySelector(".ex").value.trim() });
   }
   return { quiz: { title: title, questions: questions } };
+}
+
+/* Uploads any new pictures first, then saves the quiz with their ids. */
+function attachPictures(questions) {
+  var blocks = $("questions").children;
+  var chain = Promise.resolve();
+  questions.forEach(function (qq, i) {
+    if (qq.t !== "essay") return;
+    chain = chain.then(function () {
+      var blk = blocks[i];
+      if (blk._imgId) { qq.img = blk._imgId; return; }
+      if (blk._pending) {
+        return uploadImage(blk._pending).then(function (iid) {
+          if (!iid) throw new Error("picture");
+          blk._imgId = iid; blk._pending = "";
+          qq.img = iid;
+        });
+      }
+      qq.img = "";
+    });
+  });
+  return chain;
 }
 
 $("save").addEventListener("click", function () {
@@ -239,12 +356,14 @@ $("save").addEventListener("click", function () {
   var id = "q" + Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
   var btn = $("save");
   btn.disabled = true;
-  setMsg("save-msg", "Saving…");
-  postForm({ action: "save", pw: pw, id: id, quiz: res.quiz });
-  waitFor(function (list) { return list.some(function (q) { return q.id === id; }); }, 8).then(function (list) {
+  setMsg("save-msg", "Saving\u2026");
+  attachPictures(res.quiz.questions).then(function () {
+    postForm({ action: "save", pw: pw, id: id, quiz: res.quiz });
+    return waitFor(function (list) { return list.some(function (q) { return q.id === id; }); }, 8);
+  }).then(function (list) {
     btn.disabled = false;
     if (list) {
-      setMsg("save-msg", "Saved. Students will see “" + res.quiz.title + "” in the quiz list.", "good");
+      setMsg("save-msg", "Saved. Students will see \u201c" + res.quiz.title + "\u201d in the quiz list.", "good");
       $("title").value = "";
       $("questions").innerHTML = "";
       qCount = 0;
@@ -253,6 +372,10 @@ $("save").addEventListener("click", function () {
     } else {
       setMsg("save-msg", "The quiz could not be confirmed. Reload the list below. If it is missing, check the script password and that you deployed a new version.", "bad");
     }
+  }).catch(function (err) {
+    btn.disabled = false;
+    if (err && err.message === "picture") setMsg("save-msg", "A picture could not be saved. Remove it or try a smaller one, then save again.", "bad");
+    else setMsg("save-msg", "Something went wrong while saving. Try again.", "bad");
   });
 });
 
