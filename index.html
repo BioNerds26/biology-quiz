@@ -235,7 +235,7 @@ textarea.essay:focus-visible { outline: 3px solid var(--accent); outline-offset:
     </div>
     <div class="field">
       <label class="lbl" for="phone">Phone number</label>
-      <input type="tel" id="phone" autocomplete="tel" inputmode="tel" placeholder="e.g. 01012345678">
+      <input type="tel" id="phone" autocomplete="tel" inputmode="numeric" maxlength="11" pattern="\d{11}" placeholder="e.g. 01012345678">
     </div>
     <p class="err" id="gate-err" role="alert"></p>
     <button class="btn" type="submit" id="start">Start quiz</button>
@@ -287,7 +287,7 @@ textarea.essay:focus-visible { outline: 3px solid var(--accent); outline-offset:
     </div>
   </section>
 
-  <p class="meta foot" id="ver">Quiz version 2026-10-21 j</p>
+  <p class="meta foot" id="ver">Quiz version 2026-10-21 l</p>
 </div>
 
 <script>
@@ -419,7 +419,7 @@ function offerManualCopy(score, total) {
 }
 
 /* Paste the Google Apps Script web app address between the quotes. Leave empty to turn sheet saving off. */
-var SHEET_URL = "https://script.google.com/macros/s/AKfycbxx09SRu0QQQCCYXPUU0w4kT0Zdxc02aOR-gGGJBt7Zsx0dcVf4WAAsGXtQ9NjwdWb0/exec";
+var SHEET_URL = "https://script.google.com/macros/s/AKfycbyEgbBQxV5QSel5UCFubSlF4TGtGb0_zZYVJR55GD02yIDrcDI7nBUT_Ir8TGXZwSyc/exec";
 
 async function sendToSheet(score, total, pct) {
   if (!SHEET_URL) return false;
@@ -477,8 +477,7 @@ function esc(s) {
 }
 
 function validPhone(p) {
-  var digits = p.replace(/\D/g, "");
-  return /^[+\d\s().-]+$/.test(p) && digits.length >= 8 && digits.length <= 15;
+  return /^\d{11}$/.test(p);
 }
 
 var BUILTIN_TITLE = "IGCSE Biology Topic 1";
@@ -567,7 +566,7 @@ $("gate").addEventListener("submit", function (ev) {
   var phone = $("phone").value.trim();
   var err = $("gate-err");
   if (name.length < 2) { err.textContent = "Enter your full name to continue."; $("name").focus(); return; }
-  if (!validPhone(phone)) { err.textContent = "Enter a valid phone number, 8 to 15 digits."; $("phone").focus(); return; }
+  if (!validPhone(phone)) { err.textContent = "Enter a phone number of exactly 11 digits."; $("phone").focus(); return; }
   err.textContent = "";
   person = { name: name, phone: phone };
   $("gate").hidden = true;
