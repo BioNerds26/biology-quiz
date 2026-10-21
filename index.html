@@ -287,7 +287,7 @@ textarea.essay:focus-visible { outline: 3px solid var(--accent); outline-offset:
     </div>
   </section>
 
-  <p class="meta foot" id="ver">Quiz version 2026-10-21 l</p>
+  <p class="meta foot" id="ver">Quiz version 2026-10-21 m</p>
 </div>
 
 <script>
@@ -509,8 +509,9 @@ function cardHtml(id, title, n, essays) {
     '</span><span class="qm">' + esc(n) + ' questions' + (Number(essays) > 0 ? ' \u00b7 ' + esc(essays) + ' written' : '') + '</span></button>';
 }
 function renderPicker() {
-  var html = cardHtml("builtin", BUILTIN_TITLE, BUILTIN.length);
-  remoteQuizzes.forEach(function (q) { html += cardHtml(q.id, q.title, q.count, q.essays); });
+  var t1 = remoteQuizzes.filter(function (q) { return q.id === "topic1"; })[0];
+  var html = t1 ? cardHtml("builtin", t1.title, t1.count, t1.essays) : cardHtml("builtin", BUILTIN_TITLE, BUILTIN.length);
+  remoteQuizzes.forEach(function (q) { if (q.id !== "topic1") html += cardHtml(q.id, q.title, q.count, q.essays); });
   $("qlist").innerHTML = html;
 }
 function chooseQuiz(title, qs) {
@@ -531,9 +532,11 @@ $("qlist").addEventListener("click", function (ev) {
   var btn = ev.target.closest ? ev.target.closest(".qcard") : null;
   if (!btn) return;
   var id = btn.getAttribute("data-id");
-  if (id === "builtin") { chooseQuiz(BUILTIN_TITLE, BUILTIN); return; }
+  var hasT1 = remoteQuizzes.some(function (q) { return q.id === "topic1"; });
+  if (id === "builtin" && !hasT1) { chooseQuiz(BUILTIN_TITLE, BUILTIN); return; }
+  var fetchId = id === "builtin" ? "topic1" : id;
   $("picker-msg").textContent = "Loading quiz…";
-  fetch(SHEET_URL + "?action=get&id=" + encodeURIComponent(id) + "&t=" + Date.now())
+  fetch(SHEET_URL + "?action=get&id=" + encodeURIComponent(fetchId) + "&t=" + Date.now())
     .then(function (r) { return r.json(); })
     .then(function (j) {
       var qs = j && j.ok && j.quiz ? cleanQuestions(j.quiz.questions) : null;

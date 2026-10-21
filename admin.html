@@ -82,7 +82,8 @@ select { font: inherit; color: var(--ink); background: var(--bg); border: 1.5px 
   <div id="app" hidden style="display:flex;flex-direction:column;gap:20px">
     <section class="card">
       <span class="tag">New quiz</span>
-      <h1>Add a quiz</h1>
+      <h1 id="editor-title">Add a quiz</h1>
+      <div id="edit-banner" class="row" hidden style="justify-content:space-between"><span class="msg" id="edit-label"></span><button type="button" class="btn ghost sm" id="cancel-edit">Cancel edit</button></div>
       <div class="field">
         <label for="title">Quiz title</label>
         <input type="text" id="title" placeholder="e.g. IGCSE Biology Topic 2: Cells" maxlength="120">
@@ -109,6 +110,39 @@ var SHEET_URL = "https://script.google.com/macros/s/AKfycbyEgbBQxV5QSel5UCFubSlF
 var LETTERS = ["A", "B", "C", "D"];
 var pw = "";
 var qCount = 0;
+var editing = null;
+var BUILTIN_QUIZ = { title: "IGCSE Biology Topic 1", questions: [
+  { q: "Which of the following is NOT a characteristic shared by all living organisms?", o: ["Respiration", "Photosynthesis", "Excretion", "Growth"], a: 1,
+    e: "The seven characteristics are movement, respiration, sensitivity, growth, reproduction, excretion and nutrition (MRS GREN). Only plants and some bacteria photosynthesise." },
+  { q: "What is the term for the removal of toxic materials and waste products of metabolism from an organism?", o: ["Egestion", "Secretion", "Excretion", "Respiration"], a: 2,
+    e: "Excretion removes metabolic waste (e.g. CO₂, urea). Egestion is the removal of undigested food." },
+  { q: "In the binomial name Homo sapiens, what does the first word, Homo, represent?", o: ["The species", "The family", "The kingdom", "The genus"], a: 3,
+    e: "A binomial name has two parts: the genus (capital first letter) followed by the species (all lower case)." },
+  { q: "Which is the best definition of a species?", o: ["A group of organisms that look identical", "A group of organisms that can reproduce to produce fertile offspring", "A group of organisms living in the same habitat", "A group of organisms that share the same genus"], a: 1,
+    e: "A species is a group of organisms that can reproduce to produce fertile offspring. A mule is infertile because horses and donkeys are different species." },
+  { q: "Which list shows the classification groups in order from largest to smallest?", o: ["Kingdom, phylum, class, order, family, genus, species", "Kingdom, class, phylum, order, genus, family, species", "Species, genus, family, order, class, phylum, kingdom", "Phylum, kingdom, class, order, family, genus, species"], a: 0,
+    e: "Kingdom, Phylum, Class, Order, Family, Genus, Species." },
+  { q: "Which feature is found in mammals but NOT in the other vertebrate groups?", o: ["Lungs for gas exchange", "A backbone", "Mammary glands that produce milk", "Internal fertilisation"], a: 2,
+    e: "Mammals have hair/fur and mammary glands, and most give birth to live young." },
+  { q: "A vertebrate has moist skin and lays soft eggs without shells in water. To which group does it belong?", o: ["Reptiles", "Fish", "Amphibians", "Birds"], a: 2,
+    e: "Amphibians have moist, permeable skin and lay shell-less eggs in water. Reptiles have dry scaly skin and lay leathery-shelled eggs on land." },
+  { q: "Which group of arthropods has three body parts and six legs?", o: ["Arachnids", "Insects", "Crustaceans", "Myriapods"], a: 1,
+    e: "Insects have a head, thorax and abdomen, plus three pairs of legs." },
+  { q: "A spider has two body parts and eight legs. To which group of arthropods does it belong?", o: ["Insects", "Crustaceans", "Myriapods", "Arachnids"], a: 3,
+    e: "Arachnids (spiders, scorpions, ticks) have two body parts and four pairs of legs." },
+  { q: "Which feature is typical of a monocotyledon?", o: ["Net-like veins in the leaves", "Two seed leaves (cotyledons)", "Parallel veins in the leaves", "Flower parts in fours or fives"], a: 2,
+    e: "Monocots (e.g. grass, maize) have one cotyledon and parallel leaf veins. Dicots have two cotyledons and net-like veins." },
+  { q: "Which group of plants has roots, stems and leaves (fronds) but reproduces using spores and does not produce flowers?", o: ["Ferns", "Flowering plants", "Algae", "Fungi"], a: 0,
+    e: "Ferns reproduce by spores and have fronds. Flowering plants reproduce by seeds, and fungi are not plants." },
+  { q: "Which statement about fungi is correct?", o: ["They make food by photosynthesis", "Their bodies are made of thread-like hyphae forming a mycelium", "Their cell walls are made of cellulose", "They are all single-celled"], a: 1,
+    e: "Most fungi are multicellular with hyphae forming a mycelium. They feed saprotrophically or parasitically and have chitin cell walls (yeast is a single-celled exception)." },
+  { q: "Which statement about viruses is correct?", o: ["They have a nucleus and cytoplasm", "They can reproduce on their own outside a host", "They are made of cells with a cell membrane", "They have a protein coat and genetic material but no cell structure"], a: 3,
+    e: "Viruses are not made of cells. They have a protein coat around genetic material and reproduce only inside host cells." },
+  { q: "Which feature is found in bacterial cells?", o: ["A true nucleus surrounded by a membrane", "Chloroplasts in all cells", "Mitochondria", "A cell wall and circular DNA with no true nucleus"], a: 3,
+    e: "Bacteria are prokaryotes: cell wall, cytoplasm and circular DNA (often plasmids) but no membrane-bound nucleus." },
+  { q: "What is a dichotomous key used for?", o: ["Identifying organisms using a series of paired statements or questions", "Showing the energy flow between organisms", "Measuring the population size of a species", "Showing the evolutionary age of organisms"], a: 0,
+    e: "A dichotomous key gives two choices at each step based on observable features, leading to the identity of the organism." }
+] };
 
 function $(id) { return document.getElementById(id); }
 function esc(s) {
@@ -180,7 +214,7 @@ $("login-btn").addEventListener("click", signIn);
 $("pw").addEventListener("keydown", function (ev) { if (ev.key === "Enter") signIn(); });
 
 /* question editor */
-function addQuestion() {
+function addQuestion(pre) {
   qCount++;
   var id = qCount;
   var div = document.createElement("div");
@@ -235,8 +269,65 @@ function addQuestion() {
     if ($("questions").children.length > 1) { div.remove(); renumber(); }
     else setMsg("save-msg", "A quiz needs at least one question.", "bad");
   });
+  if (pre) fillQuestion(div, pre);
   renumber();
 }
+function fillQuestion(div, pre) {
+  div.querySelector(".qt").value = pre.q || "";
+  if (pre.t === "essay") {
+    var sel = div.querySelector(".qtype");
+    sel.value = "essay";
+    sel.dispatchEvent(new Event("change"));
+    div.querySelector(".marks").value = pre.marks || "";
+    div.querySelector(".ms").value = pre.ms || "";
+    if (pre.img) {
+      div._imgId = pre.img;
+      var prev = div.querySelector(".pic-prev"), clearBtn = div.querySelector(".pic-clear");
+      var warn = function () { setMsg("save-msg", "A picture for one question did not load. It is kept when you save, unless you remove it.", "bad"); };
+      api({ action: "image", id: pre.img }).then(function (j) {
+        if (j && j.ok && typeof j.data === "string") { prev.src = j.data; prev.hidden = false; clearBtn.hidden = false; }
+        else warn();
+      }).catch(warn);
+    }
+    return;
+  }
+  var inputs = div.querySelectorAll(".o"), radios = div.querySelectorAll('input[type="radio"]');
+  (pre.o || []).forEach(function (t, k) { if (inputs[k]) inputs[k].value = t; });
+  if (radios[pre.a]) radios[pre.a].checked = true;
+  div.querySelector(".ex").value = pre.e || "";
+}
+function startEdit(id) {
+  setMsg("list-msg", "Loading quiz…");
+  var load = id === "topic1"
+    ? api({ action: "get", id: "topic1" }).then(function (j) { return j && j.ok && j.quiz ? j.quiz : BUILTIN_QUIZ; }).catch(function () { return BUILTIN_QUIZ; })
+    : api({ action: "get", id: id }).then(function (j) { return j && j.ok && j.quiz ? j.quiz : null; });
+  load.then(function (quiz) {
+    if (!quiz || !quiz.questions || !quiz.questions.length) { setMsg("list-msg", "This quiz could not be loaded.", "bad"); return; }
+    editing = { id: id };
+    $("title").value = quiz.title;
+    $("questions").innerHTML = "";
+    qCount = 0;
+    quiz.questions.forEach(function (item) { addQuestion(item); });
+    $("editor-title").textContent = "Edit quiz";
+    $("edit-label").textContent = "Editing: " + quiz.title;
+    $("edit-banner").hidden = false;
+    $("save").textContent = "Save changes";
+    setMsg("list-msg", "");
+    setMsg("save-msg", "");
+    $("editor-title").scrollIntoView({ behavior: "smooth", block: "start" });
+  }).catch(function () { setMsg("list-msg", "This quiz could not be loaded.", "bad"); });
+}
+function endEdit() {
+  editing = null;
+  $("title").value = "";
+  $("questions").innerHTML = "";
+  qCount = 0;
+  addQuestion();
+  $("editor-title").textContent = "Add a quiz";
+  $("edit-banner").hidden = true;
+  $("save").textContent = "Save quiz";
+}
+$("cancel-edit").addEventListener("click", function () { endEdit(); setMsg("save-msg", ""); });
 /* Shrinks a picture so it fits the sheet cell limit. */
 function shrink(file) {
   return new Promise(function (resolve, reject) {
@@ -353,24 +444,30 @@ function attachPictures(questions) {
 $("save").addEventListener("click", function () {
   var res = collect();
   if (res.error) { setMsg("save-msg", res.error, "bad"); res.focus.focus(); return; }
-  var id = "q" + Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
+  var id = editing ? editing.id : "q" + Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
+  var title = res.quiz.title, n = res.quiz.questions.length;
   var btn = $("save");
   btn.disabled = true;
   setMsg("save-msg", "Saving\u2026");
   attachPictures(res.quiz.questions).then(function () {
     postForm({ action: "save", pw: pw, id: id, quiz: res.quiz });
-    return waitFor(function (list) { return list.some(function (q) { return q.id === id; }); }, 8);
+    return waitFor(function (list) { return list.some(function (q) { return q.id === id && q.title === title && q.count === n; }); }, 8);
   }).then(function (list) {
     btn.disabled = false;
     if (list) {
-      setMsg("save-msg", "Saved. Students will see \u201c" + res.quiz.title + "\u201d in the quiz list.", "good");
-      $("title").value = "";
-      $("questions").innerHTML = "";
-      qCount = 0;
-      addQuestion();
+      if (editing) {
+        setMsg("save-msg", "Changes saved. Students will see the update.", "good");
+        endEdit();
+      } else {
+        setMsg("save-msg", "Saved. Students will see \u201c" + title + "\u201d in the quiz list.", "good");
+        $("title").value = "";
+        $("questions").innerHTML = "";
+        qCount = 0;
+        addQuestion();
+      }
       renderList(list);
     } else {
-      setMsg("save-msg", "The quiz could not be confirmed. Reload the list below. If it is missing, check the script password and that you deployed a new version.", "bad");
+      setMsg("save-msg", "The quiz could not be confirmed. Reload the list below and check it. If it did not change, check the script password and that you deployed a new version.", "bad");
     }
   }).catch(function (err) {
     btn.disabled = false;
@@ -381,11 +478,20 @@ $("save").addEventListener("click", function () {
 
 /* saved quizzes */
 function renderList(list) {
-  if (!list.length) { $("list").innerHTML = '<p class="msg">No quizzes added here yet. The built-in Topic 1 quiz is always shown to students.</p>'; return; }
-  $("list").innerHTML = list.map(function (q) {
+  var t1 = list.filter(function (q) { return q.id === "topic1"; })[0];
+  var others = list.filter(function (q) { return q.id !== "topic1"; });
+  var t1Title = t1 ? t1.title : BUILTIN_QUIZ.title;
+  var t1Count = t1 ? t1.count : BUILTIN_QUIZ.questions.length;
+  var html = '<div class="qrow"><div><b>' + esc(t1Title) + '</b><small>' + (t1 ? "Edited" : "Original") + " · " + esc(t1Count) + ' questions</small></div>' +
+    '<div class="row"><button type="button" class="btn sm edit" data-id="topic1">Edit</button>' +
+    (t1 ? '<button type="button" class="btn danger sm del" data-id="topic1" data-label="Reset">Reset</button>' : '') + '</div></div>';
+  html += others.map(function (q) {
     return '<div class="qrow"><div><b>' + esc(q.title) + '</b><small>' + esc(q.count) + ' questions</small></div>' +
-      '<button type="button" class="btn danger sm del" data-id="' + esc(q.id) + '">Delete</button></div>';
+      '<div class="row"><button type="button" class="btn ghost sm edit" data-id="' + esc(q.id) + '">Edit</button>' +
+      '<button type="button" class="btn danger sm del" data-id="' + esc(q.id) + '" data-label="Delete">Delete</button></div></div>';
   }).join("");
+  if (!others.length) html += '<p class="msg">No other quizzes added yet.</p>';
+  $("list").innerHTML = html;
 }
 function refreshList() {
   setMsg("list-msg", "");
@@ -394,21 +500,27 @@ function refreshList() {
   }).catch(function () { setMsg("list-msg", "Could not load the list.", "bad"); });
 }
 $("list").addEventListener("click", function (ev) {
+  var editBtn = ev.target.closest ? ev.target.closest(".edit") : null;
+  if (editBtn) { startEdit(editBtn.getAttribute("data-id")); return; }
   var btn = ev.target.closest ? ev.target.closest(".del") : null;
   if (!btn) return;
+  var label = btn.getAttribute("data-label") || "Delete";
   if (!btn.dataset.armed) {
     btn.dataset.armed = "1";
-    btn.textContent = "Click again to delete";
-    setTimeout(function () { btn.dataset.armed = ""; btn.textContent = "Delete"; }, 4000);
+    btn.textContent = "Click again to confirm";
+    setTimeout(function () { btn.dataset.armed = ""; btn.textContent = label; }, 4000);
     return;
   }
   var id = btn.getAttribute("data-id");
   btn.disabled = true;
-  setMsg("list-msg", "Deleting…");
+  setMsg("list-msg", "Working…");
   postForm({ action: "delete", pw: pw, id: id });
   waitFor(function (list) { return !list.some(function (q) { return q.id === id; }); }, 8).then(function (list) {
-    if (list) { renderList(list); setMsg("list-msg", "Deleted.", "good"); }
-    else { btn.disabled = false; setMsg("list-msg", "Could not confirm the delete. Reload and check.", "bad"); }
+    if (list) {
+      if (editing && editing.id === id) endEdit();
+      renderList(list);
+      setMsg("list-msg", label === "Reset" ? "Reset to the original Topic 1 quiz." : "Deleted.", "good");
+    } else { btn.disabled = false; setMsg("list-msg", "Could not confirm the change. Reload and check.", "bad"); }
   });
 });
 
